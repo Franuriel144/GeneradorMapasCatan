@@ -1,0 +1,188 @@
+(() => {
+  "use strict";
+
+  const NS = "http://www.w3.org/2000/svg";
+  const SQRT3 = Math.sqrt(3);
+  const SIZE = 91;
+  const CENTER = { x: 450, y: 360 };
+  const TERRAINS = [
+    ...Array(4).fill("forest"), ...Array(4).fill("pasture"), ...Array(4).fill("fields"),
+    ...Array(3).fill("hills"), ...Array(3).fill("mountains"), "desert"
+  ];
+  const TERRAIN_META = {
+    forest: { label: "Bosque", color: "#386947", accent: "#264d34", symbol: "♠" },
+    pasture: { label: "Pastos", color: "#91b85b", accent: "#6c963d", symbol: "●" },
+    fields: { label: "Cultivos", color: "#dfbd54", accent: "#bd9134", symbol: "≋" },
+    hills: { label: "Colinas", color: "#aa5e3e", accent: "#82442f", symbol: "▲" },
+    mountains: { label: "Montañas", color: "#777d79", accent: "#555b58", symbol: "▲" },
+    desert: { label: "Desierto", color: "#d8bf88", accent: "#b4965e", symbol: "≈" }
+  };
+  const TOKEN_VALUES = {
+    A: 5, B: 2, C: 6, D: 3, E: 8, F: 10, G: 9, H: 12, I: 11,
+    J: 4, K: 8, L: 10, M: 9, N: 4, O: 5, P: 6, Q: 3, R: 11
+  };
+  const LETTERS = Object.keys(TOKEN_VALUES);
+  const PIPS = { 2:1, 3:2, 4:3, 5:4, 6:5, 8:5, 9:4, 10:3, 11:2, 12:1 };
+  const PORTS = ["3:1", "3:1", "3:1", "3:1", "Madera", "Lana", "Trigo", "Ladrillo", "Mineral"];
+  const DIRECTIONS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+  const coords = [];
+  for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) if (Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) <= 2) coords.push({ q, r });
+  coords.sort((a,b) => a.r - b.r || a.q - b.q);
+  const coordIndex = new Map(coords.map((c,i) => [`${c.q},${c.r}`, i]));
+  const neighbors = coords.map(c => DIRECTIONS.map(([dq,dr]) => coordIndex.get(`${c.q+dq},${c.r+dr}`)).filter(Number.isInteger));
+
+  const el = id => document.getElementById(id);
+  const board = el("board");
+  let hidden = true;
+  let current = null;
+  let toastTimer;
+
+  function hashSeed(str) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function rngFrom(seed) {
+    let a = hashSeed(seed) || 1;
+    return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  }
+  function shuffled(items, rng) {
+    const out = [...items];
+    for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+    return out;
+  }
+  function randomSeed() {
+    const left = ["roble","trigo","bruma","isla","puerto","colina","rebaño","cantera"];
+    return `${left[Math.floor(Math.random()*left.length)]}-${Math.floor(1000 + Math.random()*9000)}`;
+  }
+  function point(c) { return { x: CENTER.x + SIZE * SQRT3 * (c.q + c.r/2), y: CENTER.y + SIZE * 1.5 * c.r }; }
+  function polygonPoints(cx, cy, size = SIZE) {
+    return Array.from({length:6}, (_,i) => { const a = Math.PI/180 * (60*i-30); return `${cx+size*Math.cos(a)},${cy+size*Math.sin(a)}`; }).join(" ");
+  }
+  function connectedClusterTooLarge(terrains) {
+    const seen = new Set();
+    for (let i=0;i<terrains.length;i++) {
+      if (terrains[i] === "desert" || seen.has(i)) continue;
+      const stack=[i]; seen.add(i); let count=0;
+      while(stack.length){ const n=stack.pop(); count++; for(const m of neighbors[n]) if(!seen.has(m)&&terrains[m]===terrains[i]){seen.add(m);stack.push(m);} }
+      if(count>2) return true;
+    }
+    return false;
+  }
+  function validTerrain(terrains) { return !connectedClusterTooLarge(terrains); }
+  function resourceTotals(terrains, tokens) {
+    const totals = { forest:0, pasture:0, fields:0, hills:0, mountains:0 };
+    terrains.forEach((terrain,i) => { if(terrain!=="desert") totals[terrain] += PIPS[TOKEN_VALUES[tokens[i]]]; });
+    return totals;
+  }
+  function redCounts(terrains, tokens) {
+    const counts = { forest:0, pasture:0, fields:0, hills:0, mountains:0 };
+    terrains.forEach((terrain,i) => { if(terrain!=="desert" && [6,8].includes(TOKEN_VALUES[tokens[i]])) counts[terrain]++; });
+    return counts;
+  }
+  function maxVertexPips(terrains, tokens) {
+    const vertices = new Map();
+    coords.forEach((c,i) => {
+      const p=point(c); if(terrains[i]==="desert") return;
+      const pip=PIPS[TOKEN_VALUES[tokens[i]]];
+      for(let k=0;k<6;k++){ const a=Math.PI/180*(60*k-30); const x=Math.round((p.x+SIZE*Math.cos(a))*10)/10; const y=Math.round((p.y+SIZE*Math.sin(a))*10)/10; const key=`${x},${y}`; vertices.set(key,(vertices.get(key)||0)+pip); }
+    });
+    return Math.max(...vertices.values());
+  }
+  function validTokens(terrains, tokens) {
+    for(let i=0;i<tokens.length;i++){
+      if(!tokens[i]) continue;
+      const value=TOKEN_VALUES[tokens[i]];
+      if([6,8].includes(value) && neighbors[i].some(n => tokens[n] && [6,8].includes(TOKEN_VALUES[tokens[n]]))) return false;
+    }
+    const totals=resourceTotals(terrains,tokens);
+    if(["forest","pasture","fields"].some(k => totals[k]<9 || totals[k]>15)) return false;
+    if(["hills","mountains"].some(k => totals[k]<7 || totals[k]>12)) return false;
+    if(Object.values(redCounts(terrains,tokens)).some(v => v>2)) return false;
+    return maxVertexPips(terrains,tokens) <= 13;
+  }
+  function generate(seed) {
+    const rng=rngFrom(seed);
+    let terrains;
+    for(let i=0;i<2500;i++){ const t=shuffled(TERRAINS,rng); if(validTerrain(t)){terrains=t;break;} }
+    if(!terrains) terrains=shuffled(TERRAINS,rng);
+    const landIndices=terrains.map((t,i)=>t!=="desert"?i:-1).filter(i=>i>=0);
+    let tokens=Array(19).fill(null), attempts=0;
+    for(;attempts<25000;attempts++){
+      const candidate=Array(19).fill(null); shuffled(LETTERS,rng).forEach((letter,j)=>candidate[landIndices[j]]=letter);
+      if(validTokens(terrains,candidate)){tokens=candidate;break;}
+    }
+    if(!tokens.some(Boolean)) shuffled(LETTERS,rng).forEach((letter,j)=>tokens[landIndices[j]]=letter);
+    const ports=shuffled(PORTS,rng);
+    return { seed, terrains, tokens, ports, attempts: attempts+1 };
+  }
+
+  function svg(tag, attrs={}, text="") { const node=document.createElementNS(NS,tag); Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v)); if(text) node.textContent=text; return node; }
+  function addTexture(group, p, meta, index) {
+    const rng=rngFrom(`${current.seed}-texture-${index}`);
+    for(let i=0;i<7;i++){
+      const x=p.x+(rng()-.5)*92, y=p.y+(rng()-.5)*95;
+      group.appendChild(svg("circle",{cx:x,cy:y,r:2+rng()*4,fill:meta.accent,opacity:.28}));
+    }
+    group.appendChild(svg("text",{x:p.x,y:p.y+18,"text-anchor":"middle",fill:meta.accent,opacity:.32,"font-size":48,"font-family":"Georgia"},meta.symbol));
+  }
+  function drawPorts(root) {
+    if(!el("portsToggle").checked) return;
+    const rx=360, ry=295;
+    current.ports.forEach((label,i)=>{
+      const angle=(-90+i*40)*Math.PI/180, x=CENTER.x+rx*Math.cos(angle), y=CENTER.y+ry*Math.sin(angle);
+      const g=svg("g",{class:"port"});
+      g.appendChild(svg("line",{x1:CENTER.x+(rx-34)*Math.cos(angle),y1:CENTER.y+(ry-28)*Math.sin(angle),x2:x,y2:y,stroke:"#3b685f","stroke-width":3,opacity:.55}));
+      g.appendChild(svg("rect",{x:x-38,y:y-20,width:76,height:40,rx:18,fill:"#fffaf0",stroke:"#315a50","stroke-width":2}));
+      g.appendChild(svg("text",{x,y:y+5,"text-anchor":"middle",fill:"#284b43","font-size":label.length>7?11:14,"font-weight":800},label));
+      root.appendChild(g);
+    });
+  }
+  function drawBoard() {
+    board.replaceChildren();
+    const defs=svg("defs");
+    const filter=svg("filter",{id:"shadow",x:"-30%",y:"-30%",width:"160%",height:"160%"});
+    filter.appendChild(svg("feDropShadow",{dx:0,dy:5,stdDeviation:5,"flood-opacity":.22})); defs.appendChild(filter); board.appendChild(defs);
+    board.appendChild(svg("ellipse",{cx:CENTER.x,cy:CENTER.y+18,rx:343,ry:298,fill:"#77aaa5",opacity:.42}));
+    current.terrains.forEach((terrain,i)=>{
+      const p=point(coords[i]), meta=TERRAIN_META[terrain], g=svg("g",{class:`hex ${terrain}`});
+      g.appendChild(svg("polygon",{points:polygonPoints(p.x,p.y,SIZE-2),fill:meta.color,stroke:"#f7f0de","stroke-width":7,"stroke-linejoin":"round",filter:"url(#shadow)"}));
+      addTexture(g,p,meta,i);
+      if(terrain!=="desert"){
+        const letter=current.tokens[i], number=TOKEN_VALUES[letter], red=[6,8].includes(number);
+        g.appendChild(svg("circle",{cx:p.x,cy:p.y,r:30,fill:hidden?"#263c35":"#fff7e6",stroke:hidden?"#e6cf99":(red?"#a62e27":"#493c2c"),"stroke-width":3}));
+        g.appendChild(svg("text",{x:p.x,y:p.y+8,"text-anchor":"middle",fill:hidden?"#f4dfaa":(red?"#b62d24":"#251f19"),"font-size":hidden?25:28,"font-weight":900,"font-family":"Georgia"},hidden?letter:number));
+        if(!hidden){
+          const pip=PIPS[number], start=p.x-(pip-1)*5;
+          for(let d=0;d<pip;d++) g.appendChild(svg("circle",{cx:start+d*10,cy:p.y+18,r:2.2,fill:red?"#b62d24":"#3d3328"}));
+        }
+      } else {
+        g.appendChild(svg("text",{x:p.x,y:p.y+6,"text-anchor":"middle",fill:"#6f5936","font-size":13,"font-weight":800,"letter-spacing":2},"DESIERTO"));
+      }
+      board.appendChild(g);
+    });
+    drawPorts(board);
+  }
+  function setHidden(value) {
+    hidden=value; el("hideButton").classList.toggle("active",hidden); el("revealButton").classList.toggle("active",!hidden);
+    el("hideButton").setAttribute("aria-pressed",hidden); el("revealButton").setAttribute("aria-pressed",!hidden);
+    drawBoard();
+  }
+  function renderNewMap() {
+    const seed=el("seedInput").value.trim()||randomSeed(); el("seedInput").value=seed;
+    current=generate(seed); setHidden(true);
+  }
+  function toast(message) { clearTimeout(toastTimer); el("toast").textContent=message; el("toast").classList.add("show"); toastTimer=setTimeout(()=>el("toast").classList.remove("show"),1800); }
+
+  el("generateButton").addEventListener("click",renderNewMap);
+  el("randomSeedButton").addEventListener("click",()=>{el("seedInput").value=randomSeed();renderNewMap();});
+  el("seedInput").addEventListener("keydown",e=>{if(e.key==="Enter")renderNewMap();});
+  el("hideButton").addEventListener("click",()=>setHidden(true));
+  el("revealButton").addEventListener("click",()=>setHidden(false));
+  el("portsToggle").addEventListener("change",drawBoard);
+  el("printButton").addEventListener("click",()=>window.print());
+  el("copyButton").addEventListener("click",async()=>{ try{await navigator.clipboard.writeText(el("seedInput").value);toast("Semilla copiada");}catch{toast("No se pudo copiar");} });
+
+  el("seedInput").value=randomSeed();
+  renderNewMap();
+})();

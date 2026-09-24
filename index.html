@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generador de mapas equilibrados</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Generador de mapas de Catán</h1>
+      </div>
+      <div class="top-actions no-print">
+        <button class="button button-primary" id="generateButton">Generar mapa</button>
+        <button class="button button-secondary" id="printButton">Imprimir</button>
+      </div>
+    </header>
+
+    <section class="controls no-print" aria-label="Controles del mapa">
+      <label class="field">
+        <span>Semilla</span>
+        <span class="seed-row">
+          <input id="seedInput" maxlength="24" autocomplete="off" />
+          <button class="icon-button" id="randomSeedButton" aria-label="Crear otra semilla" title="Crear otra semilla">↻</button>
+        </span>
+      </label>
+      <div class="field">
+        <span>Fichas numéricas</span>
+        <div class="segmented" role="group" aria-label="Visibilidad de números">
+          <button class="segment active" id="hideButton" aria-pressed="true">Letras</button>
+          <button class="segment" id="revealButton" aria-pressed="false">Revelar</button>
+        </div>
+      </div>
+      <label class="switch-field">
+        <input type="checkbox" id="portsToggle" checked />
+        <span class="switch" aria-hidden="true"></span>
+        <span>Mostrar puertos</span>
+      </label>
+      <button class="button button-ghost" id="copyButton">Copiar semilla</button>
+    </section>
+
+    <section class="workspace">
+      <article class="map-card">
+        <div class="map-frame" id="mapFrame">
+          <svg id="board" viewBox="0 0 900 720" role="img" aria-label="Mapa generado"></svg>
+        </div>
+      </article>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
