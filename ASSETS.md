@@ -1,18 +1,11 @@
-# Fuentes de assets recomendadas
+# Assets gráficos
 
-No conviene reutilizar escaneos ni ilustraciones oficiales de Catán. Estas alternativas permiten crear un aspecto propio con licencias claras:
+Los terrenos y puertos de esta aplicación se generaron expresamente para el proyecto. No incluyen ilustraciones oficiales ni assets de terceros.
 
-## Hexágonos
+## Terrenos
 
-- [Kenney — Hexagon Tiles](https://kenney.nl/assets/hexagon-tiles): 90 archivos 2D, licencia CC0. Es la opción recomendada para sustituir los terrenos actuales.
-- [Kenney — Hexagon Pack](https://kenney.nl/assets/hexagon-pack): 310 archivos 2D, licencia CC0, con más variedad de naturaleza y edificios.
-- [OpenGameArt — Hex Board Game Tiles](https://opengameart.org/content/hex-board-game-tiles): SVG de tablero hexagonal, licencia CC0.
+Los archivos de `assets/terrains/` contienen bosque, pastos, cultivos, colinas, montañas y desierto. Son ilustraciones cenitales de estilo juego de mesa, recortadas en forma de hexágono por la propia aplicación.
 
-## Puertos e iconos de recursos
+## Puertos
 
-- [Game-icons.net](https://game-icons.net/): miles de iconos SVG editables. Sirve para barcos, puertos y símbolos de madera, lana, trigo, ladrillo y mineral. Licencia CC BY 3.0: hay que acreditar al autor de cada icono.
-- [Repositorio de Game-icons.net](https://github.com/game-icons/icons): permite descargar y buscar todos los SVG. Incluye el archivo de licencia y la autoría organizada por carpetas.
-
-## Recomendación
-
-Usar Kenney para los terrenos y Game-icons.net para los símbolos de puertos. Guardar los créditos exactos de cada icono elegido en un archivo `CREDITS.md` visible desde la aplicación.
+Los archivos de `assets/ports/` contienen el puerto genérico 3:1 y los puertos de madera, lana, trigo, ladrillo y mineral. Se muestran alrededor de la isla junto a su etiqueta.

@@ -10,12 +10,23 @@
     ...Array(3).fill("hills"), ...Array(3).fill("mountains"), "desert"
   ];
   const TERRAIN_META = {
-    forest: { label: "Bosque", color: "#386947", accent: "#264d34", symbol: "♠" },
-    pasture: { label: "Pastos", color: "#91b85b", accent: "#6c963d", symbol: "●" },
-    fields: { label: "Cultivos", color: "#dfbd54", accent: "#bd9134", symbol: "≋" },
-    hills: { label: "Colinas", color: "#aa5e3e", accent: "#82442f", symbol: "▲" },
-    mountains: { label: "Montañas", color: "#777d79", accent: "#555b58", symbol: "▲" },
-    desert: { label: "Desierto", color: "#d8bf88", accent: "#b4965e", symbol: "≈" }
+    forest: { label: "Bosque", color: "#386947" },
+    pasture: { label: "Pastos", color: "#91b85b" },
+    fields: { label: "Cultivos", color: "#dfbd54" },
+    hills: { label: "Colinas", color: "#aa5e3e" },
+    mountains: { label: "Montañas", color: "#777d79" },
+    desert: { label: "Desierto", color: "#d8bf88" }
+  };
+  const TERRAIN_ASSETS = Object.fromEntries(
+    Object.keys(TERRAIN_META).map(terrain => [terrain, `assets/terrains/${terrain}.png`])
+  );
+  const PORT_ASSETS = {
+    "3:1": "assets/ports/generic.png",
+    Madera: "assets/ports/wood.png",
+    Lana: "assets/ports/wool.png",
+    Trigo: "assets/ports/grain.png",
+    Ladrillo: "assets/ports/brick.png",
+    Mineral: "assets/ports/ore.png"
   };
   const TOKEN_VALUES = {
     A: 5, B: 2, C: 6, D: 3, E: 8, F: 10, G: 9, H: 12, I: 11,
@@ -118,14 +129,6 @@
   }
 
   function svg(tag, attrs={}, text="") { const node=document.createElementNS(NS,tag); Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v)); if(text) node.textContent=text; return node; }
-  function addTexture(group, p, meta, index) {
-    const rng=rngFrom(`${current.seed}-texture-${index}`);
-    for(let i=0;i<7;i++){
-      const x=p.x+(rng()-.5)*92, y=p.y+(rng()-.5)*95;
-      group.appendChild(svg("circle",{cx:x,cy:y,r:2+rng()*4,fill:meta.accent,opacity:.28}));
-    }
-    group.appendChild(svg("text",{x:p.x,y:p.y+18,"text-anchor":"middle",fill:meta.accent,opacity:.32,"font-size":48,"font-family":"Georgia"},meta.symbol));
-  }
   function drawPorts(root) {
     if(!el("portsToggle").checked) return;
     const rx=360, ry=295;
@@ -133,8 +136,9 @@
       const angle=(-90+i*40)*Math.PI/180, x=CENTER.x+rx*Math.cos(angle), y=CENTER.y+ry*Math.sin(angle);
       const g=svg("g",{class:"port"});
       g.appendChild(svg("line",{x1:CENTER.x+(rx-34)*Math.cos(angle),y1:CENTER.y+(ry-28)*Math.sin(angle),x2:x,y2:y,stroke:"#3b685f","stroke-width":3,opacity:.55}));
-      g.appendChild(svg("rect",{x:x-38,y:y-20,width:76,height:40,rx:18,fill:"#fffaf0",stroke:"#315a50","stroke-width":2}));
-      g.appendChild(svg("text",{x,y:y+5,"text-anchor":"middle",fill:"#284b43","font-size":label.length>7?11:14,"font-weight":800},label));
+      g.appendChild(svg("image",{href:PORT_ASSETS[label],x:x-47,y:y-47,width:94,height:94,preserveAspectRatio:"xMidYMid meet",filter:"url(#shadow)"}));
+      g.appendChild(svg("rect",{x:x-31,y:y+24,width:62,height:24,rx:12,fill:"#fffaf0",stroke:"#315a50","stroke-width":1.6}));
+      g.appendChild(svg("text",{x,y:y+40,"text-anchor":"middle",fill:"#284b43","font-size":label.length>7?9:12,"font-weight":900},label));
       root.appendChild(g);
     });
   }
@@ -146,8 +150,13 @@
     board.appendChild(svg("ellipse",{cx:CENTER.x,cy:CENTER.y+18,rx:343,ry:298,fill:"#77aaa5",opacity:.42}));
     current.terrains.forEach((terrain,i)=>{
       const p=point(coords[i]), meta=TERRAIN_META[terrain], g=svg("g",{class:`hex ${terrain}`});
-      g.appendChild(svg("polygon",{points:polygonPoints(p.x,p.y,SIZE-2),fill:meta.color,stroke:"#f7f0de","stroke-width":7,"stroke-linejoin":"round",filter:"url(#shadow)"}));
-      addTexture(g,p,meta,i);
+      const points=polygonPoints(p.x,p.y,SIZE-2), clipId=`hex-clip-${i}`;
+      const clip=svg("clipPath",{id:clipId});
+      clip.appendChild(svg("polygon",{points}));
+      defs.appendChild(clip);
+      g.appendChild(svg("polygon",{points,fill:meta.color,filter:"url(#shadow)"}));
+      g.appendChild(svg("image",{href:TERRAIN_ASSETS[terrain],x:p.x-SIZE,y:p.y-SIZE,width:SIZE*2,height:SIZE*2,preserveAspectRatio:"xMidYMid slice","clip-path":`url(#${clipId})`}));
+      g.appendChild(svg("polygon",{points,fill:"none",stroke:"#f7f0de","stroke-width":7,"stroke-linejoin":"round"}));
       if(terrain!=="desert"){
         const letter=current.tokens[i], number=TOKEN_VALUES[letter], red=[6,8].includes(number);
         g.appendChild(svg("circle",{cx:p.x,cy:p.y,r:30,fill:hidden?"#263c35":"#fff7e6",stroke:hidden?"#e6cf99":(red?"#a62e27":"#493c2c"),"stroke-width":3}));
@@ -157,7 +166,8 @@
           for(let d=0;d<pip;d++) g.appendChild(svg("circle",{cx:start+d*10,cy:p.y+18,r:2.2,fill:red?"#b62d24":"#3d3328"}));
         }
       } else {
-        g.appendChild(svg("text",{x:p.x,y:p.y+6,"text-anchor":"middle",fill:"#6f5936","font-size":13,"font-weight":800,"letter-spacing":2},"DESIERTO"));
+        g.appendChild(svg("rect",{x:p.x-39,y:p.y-13,width:78,height:26,rx:13,fill:"#fff6df",opacity:.9}));
+        g.appendChild(svg("text",{x:p.x,y:p.y+5,"text-anchor":"middle",fill:"#6f4e2d","font-size":11,"font-weight":900,"letter-spacing":1.6},"DESIERTO"));
       }
       board.appendChild(g);
     });
