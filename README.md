@@ -9,6 +9,4 @@ Abre `index.html` en un navegador. La aplicación funciona sin conexión y no ne
 - La semilla permite volver a generar exactamente el mismo mapa.
 - Incluye vista de impresión A4 horizontal.
 
-Consulta `ASSETS.md` para las fuentes de gráficos recomendadas y sus licencias.
-
 Herramienta no oficial para organización de torneos.

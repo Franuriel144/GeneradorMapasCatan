@@ -3,7 +3,7 @@
 
   const NS = "http://www.w3.org/2000/svg";
   const SQRT3 = Math.sqrt(3);
-  const SIZE = 91;
+  const SIZE = 76;
   const CENTER = { x: 450, y: 360 };
   const TERRAINS = [
     ...Array(4).fill("forest"), ...Array(4).fill("pasture"), ...Array(4).fill("fields"),
@@ -67,8 +67,29 @@
     return `${left[Math.floor(Math.random()*left.length)]}-${Math.floor(1000 + Math.random()*9000)}`;
   }
   function point(c) { return { x: CENTER.x + SIZE * SQRT3 * (c.q + c.r/2), y: CENTER.y + SIZE * 1.5 * c.r }; }
+  function polygonVertices(cx, cy, size = SIZE) {
+    return Array.from({length:6}, (_,i) => { const a = Math.PI/180 * (60*i-30); return {x:cx+size*Math.cos(a),y:cy+size*Math.sin(a)}; });
+  }
   function polygonPoints(cx, cy, size = SIZE) {
-    return Array.from({length:6}, (_,i) => { const a = Math.PI/180 * (60*i-30); return `${cx+size*Math.cos(a)},${cy+size*Math.sin(a)}`; }).join(" ");
+    return polygonVertices(cx,cy,size).map(p=>`${p.x},${p.y}`).join(" ");
+  }
+  function boundaryEdges() {
+    const edges=new Map();
+    coords.forEach(c=>{
+      const p=point(c), vertices=polygonVertices(p.x,p.y);
+      vertices.forEach((start,i)=>{
+        const end=vertices[(i+1)%6];
+        const a=`${Math.round(start.x*100)},${Math.round(start.y*100)}`;
+        const b=`${Math.round(end.x*100)},${Math.round(end.y*100)}`;
+        const key=[a,b].sort().join("|");
+        if(edges.has(key)) edges.get(key).shared=true;
+        else edges.set(key,{start,end,shared:false});
+      });
+    });
+    return [...edges.values()].filter(edge=>!edge.shared).map(edge=>{
+      const midpoint={x:(edge.start.x+edge.end.x)/2,y:(edge.start.y+edge.end.y)/2};
+      return {...edge,midpoint,angle:Math.atan2(midpoint.y-CENTER.y,midpoint.x-CENTER.x)};
+    }).sort((a,b)=>a.angle-b.angle);
   }
   function connectedClusterTooLarge(terrains) {
     const seen = new Set();
@@ -131,14 +152,17 @@
   function svg(tag, attrs={}, text="") { const node=document.createElementNS(NS,tag); Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v)); if(text) node.textContent=text; return node; }
   function drawPorts(root) {
     if(!el("portsToggle").checked) return;
-    const rx=360, ry=295;
+    const coast=boundaryEdges();
+    const selectedEdges=[0,3,7,10,13,17,20,23,27];
     current.ports.forEach((label,i)=>{
-      const angle=(-90+i*40)*Math.PI/180, x=CENTER.x+rx*Math.cos(angle), y=CENTER.y+ry*Math.sin(angle);
-      const g=svg("g",{class:"port"});
-      g.appendChild(svg("line",{x1:CENTER.x+(rx-34)*Math.cos(angle),y1:CENTER.y+(ry-28)*Math.sin(angle),x2:x,y2:y,stroke:"#3b685f","stroke-width":3,opacity:.55}));
-      g.appendChild(svg("image",{href:PORT_ASSETS[label],x:x-47,y:y-47,width:94,height:94,preserveAspectRatio:"xMidYMid meet",filter:"url(#shadow)"}));
-      g.appendChild(svg("rect",{x:x-31,y:y+24,width:62,height:24,rx:12,fill:"#fffaf0",stroke:"#315a50","stroke-width":1.6}));
-      g.appendChild(svg("text",{x,y:y+40,"text-anchor":"middle",fill:"#284b43","font-size":label.length>7?9:12,"font-weight":900},label));
+      const edge=coast[selectedEdges[i]], dx=edge.midpoint.x-CENTER.x, dy=edge.midpoint.y-CENTER.y;
+      const distance=Math.hypot(dx,dy), x=edge.midpoint.x+dx/distance*31, y=edge.midpoint.y+dy/distance*31;
+      const g=svg("g",{class:"port","data-edge-index":selectedEdges[i]});
+      [edge.start,edge.end].forEach(vertex=>g.appendChild(svg("line",{x1:vertex.x,y1:vertex.y,x2:x,y2:y,stroke:"#315a50","stroke-width":4,"stroke-linecap":"round",opacity:.82})));
+      g.appendChild(svg("circle",{cx:x,cy:y,r:31,fill:"#fff8e8",stroke:"#315a50","stroke-width":2.5,filter:"url(#shadow)"}));
+      g.appendChild(svg("image",{href:PORT_ASSETS[label],x:x-23,y:y-27,width:46,height:46,preserveAspectRatio:"xMidYMid meet"}));
+      g.appendChild(svg("rect",{x:x-27,y:y+13,width:54,height:18,rx:9,fill:"#fffaf0",stroke:"#315a50","stroke-width":1.2}));
+      g.appendChild(svg("text",{x,y:y+26,"text-anchor":"middle",fill:"#284b43","font-size":label.length>7?7.5:9.5,"font-weight":900},label));
       root.appendChild(g);
     });
   }
