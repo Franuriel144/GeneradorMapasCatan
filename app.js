@@ -34,7 +34,7 @@
   };
   const LETTERS = Object.keys(TOKEN_VALUES);
   const PIPS = { 2:1, 3:2, 4:3, 5:4, 6:5, 8:5, 9:4, 10:3, 11:2, 12:1 };
-  const FIXED_PORTS = ["Trigo", "Mineral", "3:1", "Lana", "3:1", "3:1", "Ladrillo", "Madera", "3:1"];
+  const FIXED_PORTS = ["3:1", "Trigo", "Mineral", "3:1", "Lana", "3:1", "3:1", "Ladrillo", "Madera"];
   const DIRECTIONS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
   const coords = [];
   for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) if (Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) <= 2) coords.push({ q, r });
@@ -152,7 +152,7 @@
   function drawPorts(root) {
     if(!el("portsToggle").checked) return;
     const coast=boundaryEdges();
-    const selectedEdges=[0,3,7,10,13,17,20,23,27];
+    const selectedEdges=[29,2,6,9,12,16,19,22,26];
     FIXED_PORTS.forEach((label,i)=>{
       const edge=coast[selectedEdges[i]], dx=edge.midpoint.x-CENTER.x, dy=edge.midpoint.y-CENTER.y;
       const distance=Math.hypot(dx,dy), x=edge.midpoint.x+dx/distance*54, y=edge.midpoint.y+dy/distance*54;

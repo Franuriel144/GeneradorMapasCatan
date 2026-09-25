@@ -58,7 +58,7 @@ El primer orden que cumple todas las condiciones se utiliza en el mapa. Si se ag
 
 ### 4. Puertos
 
-Los puertos no se aleatorizan. Conservan siempre la distribución fijada. Empezando por el puerto izquierdo y siguiendo el sentido horario: **trigo, mineral, 3:1, lana, 3:1, 3:1, ladrillo, madera y 3:1**. Cada puerto queda unido visualmente a sus dos vértices costeros.
+Los puertos no se aleatorizan. Conservan siempre el orden del tablero de referencia: **3:1, trigo, mineral, 3:1, lana, 3:1, 3:1, ladrillo y madera**. Sus conexiones se sitúan una arista costera en sentido antihorario respecto a la distribución anterior, junto al hexágono correspondiente.
 
 ## Notas
 
