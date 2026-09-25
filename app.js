@@ -3,7 +3,7 @@
 
   const NS = "http://www.w3.org/2000/svg";
   const SQRT3 = Math.sqrt(3);
-  const SIZE = 76;
+  const SIZE = 70;
   const CENTER = { x: 450, y: 360 };
   const TERRAINS = [
     ...Array(4).fill("forest"), ...Array(4).fill("pasture"), ...Array(4).fill("fields"),
@@ -156,10 +156,15 @@
     const selectedEdges=[0,3,7,10,13,17,20,23,27];
     current.ports.forEach((label,i)=>{
       const edge=coast[selectedEdges[i]], dx=edge.midpoint.x-CENTER.x, dy=edge.midpoint.y-CENTER.y;
-      const distance=Math.hypot(dx,dy), x=edge.midpoint.x+dx/distance*31, y=edge.midpoint.y+dy/distance*31;
+      const distance=Math.hypot(dx,dy), x=edge.midpoint.x+dx/distance*54, y=edge.midpoint.y+dy/distance*54;
       const g=svg("g",{class:"port","data-edge-index":selectedEdges[i]});
-      [edge.start,edge.end].forEach(vertex=>g.appendChild(svg("line",{x1:vertex.x,y1:vertex.y,x2:x,y2:y,stroke:"#315a50","stroke-width":4,"stroke-linecap":"round",opacity:.82})));
-      g.appendChild(svg("circle",{cx:x,cy:y,r:31,fill:"#fff8e8",stroke:"#315a50","stroke-width":2.5,filter:"url(#shadow)"}));
+      g.appendChild(svg("line",{x1:edge.start.x,y1:edge.start.y,x2:edge.end.x,y2:edge.end.y,stroke:"#d99f45","stroke-width":7,"stroke-linecap":"round"}));
+      [edge.start,edge.end].forEach(vertex=>{
+        g.appendChild(svg("line",{x1:vertex.x,y1:vertex.y,x2:x,y2:y,stroke:"#fff8e8","stroke-width":9,"stroke-linecap":"round",opacity:.96}));
+        g.appendChild(svg("line",{x1:vertex.x,y1:vertex.y,x2:x,y2:y,stroke:"#315a50","stroke-width":3.2,"stroke-linecap":"round"}));
+        g.appendChild(svg("circle",{cx:vertex.x,cy:vertex.y,r:5.5,fill:"#d99f45",stroke:"#fff8e8","stroke-width":2}));
+      });
+      g.appendChild(svg("circle",{cx:x,cy:y,r:32,fill:"#fff8e8",stroke:"#315a50","stroke-width":3,filter:"url(#shadow)"}));
       g.appendChild(svg("image",{href:PORT_ASSETS[label],x:x-23,y:y-27,width:46,height:46,preserveAspectRatio:"xMidYMid meet"}));
       g.appendChild(svg("rect",{x:x-27,y:y+13,width:54,height:18,rx:9,fill:"#fffaf0",stroke:"#315a50","stroke-width":1.2}));
       g.appendChild(svg("text",{x,y:y+26,"text-anchor":"middle",fill:"#284b43","font-size":label.length>7?7.5:9.5,"font-weight":900},label));
