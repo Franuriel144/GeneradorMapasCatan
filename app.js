@@ -175,7 +175,6 @@
     const defs=svg("defs");
     const filter=svg("filter",{id:"shadow",x:"-30%",y:"-30%",width:"160%",height:"160%"});
     filter.appendChild(svg("feDropShadow",{dx:0,dy:5,stdDeviation:5,"flood-opacity":.22})); defs.appendChild(filter); board.appendChild(defs);
-    board.appendChild(svg("ellipse",{cx:CENTER.x,cy:CENTER.y+18,rx:343,ry:298,fill:"#77aaa5",opacity:.42}));
     current.terrains.forEach((terrain,i)=>{
       const p=point(coords[i]), meta=TERRAIN_META[terrain], g=svg("g",{class:`hex ${terrain}`});
       const points=polygonPoints(p.x,p.y,SIZE-2), clipId=`hex-clip-${i}`;

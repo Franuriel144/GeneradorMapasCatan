@@ -19,6 +19,7 @@ Aplicación web sin backend para crear mapas reproducibles y equilibrados del ta
 - 19 terrenos: 4 bosques, 4 pastos, 4 cultivos, 3 colinas, 3 montañas y 1 desierto.
 - 18 fichas numéricas, una por cada terreno productor.
 - 9 puertos: cuatro puertos 3:1 y uno de cada recurso —madera, lana, trigo, ladrillo y mineral—.
+- Fondo limpio sin elementos decorativos detrás del tablero.
 
 Las letras corresponden a los números impresos en el reverso de las fichas:
 
