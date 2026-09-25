@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Generador de mapas equilibrados</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=2" />
 </head>
 <body>
   <main class="app-shell">
@@ -45,12 +45,13 @@
       <article class="map-card">
         <div class="map-frame" id="mapFrame">
           <button class="button button-secondary fullscreen-control no-print" id="fullscreenButton" aria-pressed="false">Maximizar mapa</button>
+          <button class="button button-secondary visibility-control no-print" id="mapVisibilityButton" aria-pressed="false">Revelar números</button>
           <svg id="board" viewBox="0 0 900 720" role="img" aria-label="Mapa generado"></svg>
         </div>
       </article>
     </section>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

@@ -34,7 +34,7 @@
   };
   const LETTERS = Object.keys(TOKEN_VALUES);
   const PIPS = { 2:1, 3:2, 4:3, 5:4, 6:5, 8:5, 9:4, 10:3, 11:2, 12:1 };
-  const FIXED_PORTS = ["3:1", "Trigo", "Mineral", "3:1", "Lana", "3:1", "3:1", "Ladrillo", "Madera"];
+  const FIXED_PORTS = ["Trigo", "Mineral", "3:1", "Lana", "3:1", "3:1", "Ladrillo", "Madera", "3:1"];
   const DIRECTIONS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
   const coords = [];
   for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) if (Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) <= 2) coords.push({ q, r });
@@ -204,6 +204,8 @@
   function setHidden(value) {
     hidden=value; el("hideButton").classList.toggle("active",hidden); el("revealButton").classList.toggle("active",!hidden);
     el("hideButton").setAttribute("aria-pressed",hidden); el("revealButton").setAttribute("aria-pressed",!hidden);
+    el("mapVisibilityButton").textContent=hidden?"Revelar números":"Ocultar números";
+    el("mapVisibilityButton").setAttribute("aria-pressed",!hidden);
     drawBoard();
   }
   function renderNewMap() {
@@ -268,6 +270,7 @@
   }
   function updateFullscreenButton() {
     const fullscreen=Boolean(document.fullscreenElement);
+    el("mapFrame").classList.toggle("is-fullscreen",fullscreen);
     el("fullscreenButton").textContent=fullscreen?"Salir de pantalla completa":"Maximizar mapa";
     el("fullscreenButton").setAttribute("aria-pressed",fullscreen);
   }
@@ -278,6 +281,7 @@
   el("seedInput").addEventListener("keydown",e=>{if(e.key==="Enter")renderNewMap();});
   el("hideButton").addEventListener("click",()=>setHidden(true));
   el("revealButton").addEventListener("click",()=>setHidden(false));
+  el("mapVisibilityButton").addEventListener("click",()=>setHidden(!hidden));
   el("portsToggle").addEventListener("change",drawBoard);
   el("downloadButton").addEventListener("click",downloadMapPng);
   el("fullscreenButton").addEventListener("click",toggleFullscreen);

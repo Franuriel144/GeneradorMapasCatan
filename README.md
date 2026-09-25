@@ -11,7 +11,8 @@ Aplicación web sin backend para crear mapas reproducibles y equilibrados del ta
 5. **Mostrar puertos:** añade o retira los nueve puertos del mapa.
 6. **Copiar semilla:** copia el identificador para repetir el tablero en otra mesa.
 7. **Descargar PNG:** guarda únicamente el mapa, respetando si están visibles las letras o los números y si se muestran los puertos. El archivo se genera a 2700 × 2160 píxeles.
-8. **Maximizar mapa:** muestra el mapa a pantalla completa. El mismo botón permite volver a la vista normal.
+8. **Maximizar mapa:** muestra el mapa completo a pantalla completa. El mismo botón permite volver a la vista normal.
+9. **Revelar números:** el botón situado en la esquina inferior izquierda del mapa alterna rápidamente entre las letras y los números.
 
 ## Componentes del mapa
 
@@ -57,7 +58,7 @@ El primer orden que cumple todas las condiciones se utiliza en el mapa. Si se ag
 
 ### 4. Puertos
 
-Los puertos no se aleatorizan. Conservan siempre la distribución del tablero de referencia. Empezando por el puerto izquierdo y siguiendo el sentido horario: **3:1, trigo, mineral, 3:1, lana, 3:1, 3:1, ladrillo y madera**. Cada puerto queda unido visualmente a sus dos vértices costeros.
+Los puertos no se aleatorizan. Conservan siempre la distribución fijada. Empezando por el puerto izquierdo y siguiendo el sentido horario: **trigo, mineral, 3:1, lana, 3:1, 3:1, ladrillo, madera y 3:1**. Cada puerto queda unido visualmente a sus dos vértices costeros.
 
 ## Notas
 
