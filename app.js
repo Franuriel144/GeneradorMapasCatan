@@ -34,7 +34,7 @@
   };
   const LETTERS = Object.keys(TOKEN_VALUES);
   const PIPS = { 2:1, 3:2, 4:3, 5:4, 6:5, 8:5, 9:4, 10:3, 11:2, 12:1 };
-  const PORTS = ["3:1", "3:1", "3:1", "3:1", "Madera", "Lana", "Trigo", "Ladrillo", "Mineral"];
+  const FIXED_PORTS = ["3:1", "Trigo", "Mineral", "3:1", "Lana", "3:1", "3:1", "Ladrillo", "Madera"];
   const DIRECTIONS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
   const coords = [];
   for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) if (Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) <= 2) coords.push({ q, r });
@@ -145,8 +145,7 @@
       if(validTokens(terrains,candidate)){tokens=candidate;break;}
     }
     if(!tokens.some(Boolean)) shuffled(LETTERS,rng).forEach((letter,j)=>tokens[landIndices[j]]=letter);
-    const ports=shuffled(PORTS,rng);
-    return { seed, terrains, tokens, ports, attempts: attempts+1 };
+    return { seed, terrains, tokens, attempts: attempts+1 };
   }
 
   function svg(tag, attrs={}, text="") { const node=document.createElementNS(NS,tag); Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,v)); if(text) node.textContent=text; return node; }
@@ -154,7 +153,7 @@
     if(!el("portsToggle").checked) return;
     const coast=boundaryEdges();
     const selectedEdges=[0,3,7,10,13,17,20,23,27];
-    current.ports.forEach((label,i)=>{
+    FIXED_PORTS.forEach((label,i)=>{
       const edge=coast[selectedEdges[i]], dx=edge.midpoint.x-CENTER.x, dy=edge.midpoint.y-CENTER.y;
       const distance=Math.hypot(dx,dy), x=edge.midpoint.x+dx/distance*54, y=edge.midpoint.y+dy/distance*54;
       const g=svg("g",{class:"port","data-edge-index":selectedEdges[i]});
@@ -258,6 +257,20 @@
       button.disabled=false; button.textContent=originalLabel;
     }
   }
+  async function toggleFullscreen() {
+    const frame=el("mapFrame");
+    try {
+      if(document.fullscreenElement) await document.exitFullscreen();
+      else await frame.requestFullscreen();
+    } catch(error) {
+      console.error(error); toast("No se pudo maximizar el mapa");
+    }
+  }
+  function updateFullscreenButton() {
+    const fullscreen=Boolean(document.fullscreenElement);
+    el("fullscreenButton").textContent=fullscreen?"Salir de pantalla completa":"Maximizar mapa";
+    el("fullscreenButton").setAttribute("aria-pressed",fullscreen);
+  }
   function toast(message) { clearTimeout(toastTimer); el("toast").textContent=message; el("toast").classList.add("show"); toastTimer=setTimeout(()=>el("toast").classList.remove("show"),1800); }
 
   el("generateButton").addEventListener("click",renderNewMap);
@@ -267,6 +280,8 @@
   el("revealButton").addEventListener("click",()=>setHidden(false));
   el("portsToggle").addEventListener("change",drawBoard);
   el("downloadButton").addEventListener("click",downloadMapPng);
+  el("fullscreenButton").addEventListener("click",toggleFullscreen);
+  document.addEventListener("fullscreenchange",updateFullscreenButton);
   el("copyButton").addEventListener("click",async()=>{ try{await navigator.clipboard.writeText(el("seedInput").value);toast("Semilla copiada");}catch{toast("No se pudo copiar");} });
 
   el("seedInput").value=randomSeed();

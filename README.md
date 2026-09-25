@@ -4,13 +4,14 @@ Aplicación web sin backend para crear mapas reproducibles y equilibrados del ta
 
 ## Funcionamiento de la página
 
-1. **Semilla:** cada texto identifica un mapa completo. La misma semilla siempre genera los mismos terrenos, fichas y puertos.
+1. **Semilla:** cada texto identifica una distribución. La misma semilla siempre genera los mismos terrenos y fichas numéricas.
 2. **Generar mapa:** crea otra distribución usando la semilla escrita. El botón circular genera antes una semilla nueva.
 3. **Letras:** muestra las letras del reverso de las fichas numéricas para preparar el tablero sin revelar los números.
 4. **Revelar:** sustituye las letras por los números y muestra sus puntos de probabilidad.
 5. **Mostrar puertos:** añade o retira los nueve puertos del mapa.
 6. **Copiar semilla:** copia el identificador para repetir el tablero en otra mesa.
 7. **Descargar PNG:** guarda únicamente el mapa, respetando si están visibles las letras o los números y si se muestran los puertos. El archivo se genera a 2700 × 2160 píxeles.
+8. **Maximizar mapa:** muestra el mapa a pantalla completa. El mismo botón permite volver a la vista normal.
 
 ## Componentes del mapa
 
@@ -56,7 +57,7 @@ El primer orden que cumple todas las condiciones se utiliza en el mapa. Si se ag
 
 ### 4. Puertos
 
-Los nueve tipos de puerto se barajan con la misma semilla. Después se asignan a nueve aristas costeras diferentes, repartidas regularmente alrededor de la isla. La arista correspondiente aparece resaltada y conectada visualmente con su marcador.
+Los puertos no se aleatorizan. Conservan siempre la distribución del tablero de referencia. Empezando por el puerto izquierdo y siguiendo el sentido horario: **3:1, trigo, mineral, 3:1, lana, 3:1, 3:1, ladrillo y madera**. Cada puerto queda unido visualmente a sus dos vértices costeros.
 
 ## Notas
 
