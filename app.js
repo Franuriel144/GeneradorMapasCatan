@@ -211,6 +211,53 @@
     const seed=el("seedInput").value.trim()||randomSeed(); el("seedInput").value=seed;
     current=generate(seed); setHidden(true);
   }
+  function blobToDataUrl(blob) {
+    return new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=reject; reader.readAsDataURL(blob); });
+  }
+  function loadImage(url) {
+    return new Promise((resolve,reject)=>{ const image=new Image(); image.onload=()=>resolve(image); image.onerror=reject; image.src=url; });
+  }
+  async function downloadMapPng() {
+    const button=el("downloadButton"), originalLabel=button.textContent;
+    button.disabled=true; button.textContent="Generando…";
+    try {
+      const clone=board.cloneNode(true), assetCache=new Map();
+      clone.setAttribute("xmlns",NS);
+      const imageNodes=[...clone.querySelectorAll("image")];
+      const assetUrls=[...new Set(imageNodes.map(imageNode=>imageNode.getAttribute("href")).filter(href=>href && !href.startsWith("data:")))];
+      await Promise.all(assetUrls.map(async href=>{
+          const response=await fetch(new URL(href,location.href));
+          if(!response.ok) throw new Error(`No se pudo cargar ${href}`);
+          assetCache.set(href,await blobToDataUrl(await response.blob()));
+      }));
+      imageNodes.forEach(imageNode=>{
+        const href=imageNode.getAttribute("href");
+        if(assetCache.has(href)) imageNode.setAttribute("href",assetCache.get(href));
+      });
+      const background=document.createElementNS(NS,"rect");
+      Object.entries({x:0,y:0,width:900,height:720,fill:"#c9dfdb"}).forEach(([key,value])=>background.setAttribute(key,value));
+      clone.insertBefore(background,clone.firstChild);
+      const svgBlob=new Blob([new XMLSerializer().serializeToString(clone)],{type:"image/svg+xml;charset=utf-8"});
+      const svgUrl=URL.createObjectURL(svgBlob), image=await loadImage(svgUrl);
+      const scale=3, canvas=document.createElement("canvas");
+      canvas.width=900*scale; canvas.height=720*scale;
+      const context=canvas.getContext("2d");
+      context.imageSmoothingEnabled=true; context.imageSmoothingQuality="high";
+      context.drawImage(image,0,0,canvas.width,canvas.height);
+      URL.revokeObjectURL(svgUrl);
+      const pngBlob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      if(!pngBlob) throw new Error("No se pudo crear el PNG");
+      const pngUrl=URL.createObjectURL(pngBlob), link=document.createElement("a");
+      const safeSeed=current.seed.replace(/[^a-z0-9_-]+/gi,"-").replace(/^-+|-+$/g,"")||"mapa";
+      link.href=pngUrl; link.download=`mapa-catan-${safeSeed}.png`; link.click();
+      setTimeout(()=>URL.revokeObjectURL(pngUrl),1000);
+      toast("PNG descargado");
+    } catch(error) {
+      console.error(error); toast("No se pudo generar el PNG");
+    } finally {
+      button.disabled=false; button.textContent=originalLabel;
+    }
+  }
   function toast(message) { clearTimeout(toastTimer); el("toast").textContent=message; el("toast").classList.add("show"); toastTimer=setTimeout(()=>el("toast").classList.remove("show"),1800); }
 
   el("generateButton").addEventListener("click",renderNewMap);
@@ -219,7 +266,7 @@
   el("hideButton").addEventListener("click",()=>setHidden(true));
   el("revealButton").addEventListener("click",()=>setHidden(false));
   el("portsToggle").addEventListener("change",drawBoard);
-  el("printButton").addEventListener("click",()=>window.print());
+  el("downloadButton").addEventListener("click",downloadMapPng);
   el("copyButton").addEventListener("click",async()=>{ try{await navigator.clipboard.writeText(el("seedInput").value);toast("Semilla copiada");}catch{toast("No se pudo copiar");} });
 
   el("seedInput").value=randomSeed();
